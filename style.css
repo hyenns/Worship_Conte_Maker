@@ -1194,3 +1194,201 @@ body.modal-open {
     flex: 1 1 150px;
   }
 }
+
+/* v7: 제작자 서명과 숨겨진 이스터에그 */
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px 24px 28px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.app-footer > span::after {
+  content: "·";
+  margin-left: 10px;
+}
+
+.creator-credit {
+  position: relative;
+  border: 0;
+  padding: 5px 7px;
+  color: #696c51;
+  background: transparent;
+  font: inherit;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.creator-credit::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  right: 7px;
+  bottom: 2px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0;
+  transform: scaleX(0.4);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.creator-credit:hover::after,
+.creator-credit:focus-visible::after {
+  opacity: 0.55;
+  transform: scaleX(1);
+}
+
+.creator-credit span {
+  display: inline-block;
+  transition: transform 180ms ease;
+}
+
+.creator-credit:hover span {
+  transform: rotate(-12deg) scale(1.18);
+}
+
+.easter-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(640px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow: hidden auto;
+  padding: 30px;
+  border: 1px solid rgba(112, 117, 79, 0.18);
+  border-radius: 24px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(229, 232, 207, 0.92), transparent 34%),
+    linear-gradient(145deg, #fff 0%, #faf9f3 100%);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.3);
+}
+
+.easter-dialog .eyebrow {
+  margin-bottom: 8px;
+}
+
+.easter-dialog h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(24px, 4vw, 34px);
+}
+
+.easter-close {
+  position: absolute;
+  z-index: 4;
+  top: 16px;
+  right: 16px;
+}
+
+.easter-message {
+  margin: 10px 0 20px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.youth-photo-frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 300px;
+  overflow: hidden;
+  border: 8px solid #fff;
+  border-radius: 18px;
+  background: #eeede5;
+  box-shadow: 0 12px 30px rgba(59, 59, 46, 0.14);
+}
+
+.youth-photo-frame img {
+  display: block;
+  width: 100%;
+  max-height: 440px;
+  object-fit: cover;
+}
+
+.youth-photo-placeholder {
+  display: grid;
+  place-items: center;
+  gap: 7px;
+  min-height: 300px;
+  padding: 28px;
+  color: #777968;
+}
+
+.youth-photo-placeholder > span {
+  font-size: 38px;
+}
+
+.youth-photo-placeholder strong {
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.youth-photo-placeholder small {
+  max-width: 390px;
+  line-height: 1.65;
+}
+
+.easter-signature {
+  margin: 18px 0 0;
+  color: #7a7d63;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.confetti-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -18px;
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: easter-confetti 1.7s ease-out forwards;
+}
+
+@keyframes easter-confetti {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -10px, 0) rotate(0deg);
+  }
+  12% { opacity: 0.95; }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--drift), 650px, 0) rotate(var(--spin));
+  }
+}
+
+@media (max-width: 620px) {
+  .app-footer {
+    flex-wrap: wrap;
+    padding-bottom: 20px;
+  }
+
+  .easter-dialog {
+    padding: 24px 16px 18px;
+  }
+
+  .youth-photo-frame,
+  .youth-photo-placeholder {
+    min-height: 230px;
+  }
+}
+
+@media print {
+  .app-footer,
+  #easterEggModal {
+    display: none !important;
+  }
+}

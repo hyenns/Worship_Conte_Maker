@@ -8,6 +8,9 @@ const state = {
   cropTargetIndex: null,
   cropViewport: null,
   cropDrag: null,
+  creatorClickCount: 0,
+  creatorClickTimer: null,
+  secretKeyBuffer: "",
 };
 
 const elements = {
@@ -45,6 +48,12 @@ const elements = {
   cropCancelBtn: document.getElementById("cropCancelBtn"),
   cropApplyBtn: document.getElementById("cropApplyBtn"),
   cropCloseBtn: document.getElementById("cropCloseBtn"),
+  creatorCredit: document.getElementById("creatorCredit"),
+  easterEggModal: document.getElementById("easterEggModal"),
+  easterCloseBtn: document.getElementById("easterCloseBtn"),
+  youthPhoto: document.getElementById("youthPhoto"),
+  youthPhotoPlaceholder: document.getElementById("youthPhotoPlaceholder"),
+  confettiLayer: document.getElementById("confettiLayer"),
 };
 
 init();
@@ -112,8 +121,22 @@ function bindEvents() {
   elements.cropCancelBtn.addEventListener("click", closeCropModal);
   elements.cropCloseBtn.addEventListener("click", closeCropModal);
   document.querySelectorAll("[data-crop-close]").forEach((element) => element.addEventListener("click", closeCropModal));
+  elements.creatorCredit.addEventListener("click", handleCreatorCreditClick);
+  elements.easterCloseBtn.addEventListener("click", closeEasterEgg);
+  document.querySelectorAll("[data-easter-close]").forEach((element) => element.addEventListener("click", closeEasterEgg));
+  elements.youthPhoto.addEventListener("load", showYouthPhoto);
+  elements.youthPhoto.addEventListener("error", showYouthPhotoPlaceholder);
+  if (elements.youthPhoto.complete) {
+    elements.youthPhoto.naturalWidth ? showYouthPhoto() : showYouthPhotoPlaceholder();
+  }
+
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !elements.cropModal.hidden) closeCropModal();
+    if (event.key === "Escape") {
+      if (!elements.cropModal.hidden) closeCropModal();
+      if (!elements.easterEggModal.hidden) closeEasterEgg();
+      return;
+    }
+    captureEasterEggKeys(event);
   });
 
   elements.cropCanvas.addEventListener("pointerdown", startCropPointerDrag);
@@ -968,6 +991,66 @@ function applyManualCrop() {
   renderImageList();
   requestRender();
   showToast("선택한 여백 자르기를 적용했습니다.");
+}
+
+
+function handleCreatorCreditClick() {
+  state.creatorClickCount += 1;
+  window.clearTimeout(state.creatorClickTimer);
+  state.creatorClickTimer = window.setTimeout(() => {
+    state.creatorClickCount = 0;
+  }, 2800);
+
+  if (state.creatorClickCount >= 5) {
+    state.creatorClickCount = 0;
+    openEasterEgg();
+  }
+}
+
+function captureEasterEggKeys(event) {
+  if (event.ctrlKey || event.metaKey || event.altKey || event.key.length !== 1) return;
+  state.secretKeyBuffer = `${state.secretKeyBuffer}${event.key.toLowerCase()}`.slice(-5);
+  if (state.secretKeyBuffer === "hyein") {
+    state.secretKeyBuffer = "";
+    openEasterEgg();
+  }
+}
+
+function openEasterEgg() {
+  elements.easterEggModal.hidden = false;
+  document.body.classList.add("modal-open");
+  launchEasterConfetti();
+}
+
+function closeEasterEgg() {
+  elements.easterEggModal.hidden = true;
+  if (elements.cropModal.hidden) document.body.classList.remove("modal-open");
+  elements.confettiLayer.innerHTML = "";
+}
+
+function showYouthPhoto() {
+  elements.youthPhoto.hidden = false;
+  elements.youthPhotoPlaceholder.hidden = true;
+}
+
+function showYouthPhotoPlaceholder() {
+  elements.youthPhoto.hidden = true;
+  elements.youthPhotoPlaceholder.hidden = false;
+}
+
+function launchEasterConfetti() {
+  const colors = ["#7a8161", "#d4b36a", "#d9a6a0", "#9caac4", "#c6ca9e"];
+  elements.confettiLayer.innerHTML = "";
+  for (let index = 0; index < 32; index += 1) {
+    const piece = document.createElement("span");
+    piece.className = "confetti-piece";
+    piece.style.left = `${Math.random() * 100}%`;
+    piece.style.background = colors[index % colors.length];
+    piece.style.animationDelay = `${Math.random() * 0.32}s`;
+    piece.style.setProperty("--drift", `${(Math.random() - 0.5) * 220}px`);
+    piece.style.setProperty("--spin", `${360 + Math.random() * 720}deg`);
+    elements.confettiLayer.appendChild(piece);
+  }
 }
 
 function printPages() {
