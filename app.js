@@ -1001,10 +1001,11 @@ function downloadCanvas(canvas, pageIndex) {
 
 function buildFileName(pageIndex) {
   const date = elements.conteDate.value || formatDateInput(new Date());
-  const rawName = elements.fileName.value.trim() || "찬양콘티";
+  const rawName = elements.fileName.value.trim();
   const safeName = rawName.replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, "_");
   const pageSuffix = state.canvases.length > 1 ? `_p${pageIndex + 1}` : "";
-  return `${date}_${safeName}${pageSuffix}.png`;
+  const namePart = safeName ? `_${safeName}` : "";
+  return `${date}${namePart}${pageSuffix}.png`;
 }
 
 function resetAll() {
@@ -1017,7 +1018,7 @@ function resetAll() {
   elements.autoTrim.checked = true;
   elements.showDividers.checked = false;
   elements.conteDate.value = formatDateInput(new Date());
-  elements.fileName.value = "청년부_찬양콘티";
+  elements.fileName.value = "";
   renderImageList();
   requestRender();
   showToast("초기화했습니다.");

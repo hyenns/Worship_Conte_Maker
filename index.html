@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="악보 이미지를 자동으로 정리해 찬양 콘티 이미지를 만드는 웹 도구" />
   <title>Worship Conte Maker</title>
-  <link rel="stylesheet" href="style.css?v=5" />
+  <link rel="stylesheet" href="style.css?v=6" />
 </head>
 <body>
   <header class="app-header">
@@ -35,7 +35,7 @@
 
         <label class="field">
           <span>파일 이름</span>
-          <input type="text" id="fileName" value="청년부_찬양콘티" maxlength="60" />
+          <input type="text" id="fileName" value="" placeholder="예: 청년부_찬양콘티" maxlength="60" autocomplete="off" />
         </label>
 
         <label class="field">
@@ -188,6 +188,6 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
