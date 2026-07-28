@@ -1051,3 +1051,123 @@ body.modal-open {
     font-size: 9px;
   }
 }
+
+
+/* v4: 좁은 창과 2단 레이아웃에서 카드 컨트롤이 겹치지 않도록 반응형 보완 */
+.control-panel {
+  container-type: inline-size;
+  container-name: control-panel;
+}
+
+.image-card,
+.card-info,
+.card-controls,
+.mini-field {
+  min-width: 0;
+}
+
+.image-card {
+  overflow: hidden;
+}
+
+.card-controls {
+  grid-template-columns: minmax(110px, 1.2fr) minmax(88px, 0.8fr) minmax(112px, 1fr);
+}
+
+.mini-field select,
+.mini-field input[type="range"] {
+  max-width: 100%;
+}
+
+@container control-panel (max-width: 650px) {
+  .image-card {
+    grid-template-columns: 20px 64px minmax(0, 1fr) 34px;
+    gap: 9px;
+    align-items: start;
+  }
+
+  .card-thumb {
+    width: 64px;
+    height: 60px;
+  }
+
+  .card-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .card-controls .mini-field:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .remove-button {
+    align-self: start;
+  }
+}
+
+@container control-panel (max-width: 470px) {
+  .image-card {
+    grid-template-columns: 16px 54px minmax(0, 1fr) 32px;
+    gap: 7px;
+    padding: 9px 7px;
+  }
+
+  .card-thumb {
+    width: 54px;
+    height: 54px;
+  }
+
+  .card-title-row {
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 7px;
+  }
+
+  .card-name {
+    flex: 1 1 calc(100% - 32px);
+  }
+
+  .crop-status {
+    margin-left: 32px;
+  }
+
+  .card-controls {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .card-controls .mini-field:first-child {
+    grid-column: auto;
+  }
+
+  .card-action-row {
+    margin-top: 8px;
+  }
+
+  .card-action-button {
+    width: 100%;
+  }
+
+  .remove-button {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* 카드가 지나치게 좁아지기 전에 전체 화면을 1단으로 전환 */
+@media (max-width: 1360px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    max-width: 1080px;
+  }
+
+  .preview-panel {
+    min-height: 660px;
+  }
+}
+
+@media (max-width: 680px) {
+  .toolbar p {
+    text-align: left;
+  }
+}
