@@ -1309,6 +1309,11 @@ body.modal-open {
   object-fit: cover;
 }
 
+.youth-photo-placeholder[hidden],
+.youth-photo-frame img[hidden] {
+  display: none !important;
+}
+
 .youth-photo-placeholder {
   display: grid;
   place-items: center;
