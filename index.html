@@ -63,7 +63,7 @@
           <span class="toggle-ui"></span>
           <span>
             <strong>흰 여백 자동 제거</strong>
-            <small>악보 바깥의 빈 공간을 줄여 더 크게 배치합니다.</small>
+            <small>악보 가장자리의 빈 공간을 감지해 자동으로 잘라냅니다.</small>
           </span>
         </label>
 
@@ -95,7 +95,7 @@
 
       <div class="toolbar">
         <button type="button" class="secondary-button" id="addMoreBtn">이미지 더 추가</button>
-        <p>카드를 끌어서 곡 순서를 변경할 수 있습니다.</p>
+        <p>카드를 끌어서 순서를 변경하고, 곡별로 여백을 자를 수 있습니다.</p>
       </div>
 
       <div id="imageList" class="image-list empty" aria-live="polite">
@@ -113,14 +113,14 @@
           <h2>미리보기</h2>
         </div>
         <div class="download-actions">
-          <button type="button" class="secondary-button" id="printBtn" disabled>PDF로 저장</button>
+          <button type="button" class="secondary-button print-button" id="printBtn" disabled>바로 인쇄</button>
           <button type="button" class="primary-button" id="downloadBtn" disabled>PNG 다운로드</button>
         </div>
       </div>
 
       <div class="preview-note">
         <span id="pageSummary">이미지를 추가하면 미리보기가 생성됩니다.</span>
-        <span>다운로드 파일은 원본 해상도로 생성됩니다.</span>
+        <span>인쇄 버튼은 브라우저 인쇄 창을 열어줍니다.</span>
       </div>
 
       <div id="previewPages" class="preview-pages empty-preview">
@@ -133,6 +133,55 @@
       </div>
     </section>
   </main>
+
+  <div id="cropModal" class="modal" hidden>
+    <div class="modal-backdrop" data-crop-close></div>
+    <section class="crop-dialog" role="dialog" aria-modal="true" aria-labelledby="cropTitle">
+      <header class="crop-dialog-header">
+        <div>
+          <p class="eyebrow">MANUAL CROP</p>
+          <h2 id="cropTitle">악보 여백 자르기</h2>
+          <p id="cropFileName" class="crop-file-name"></p>
+        </div>
+        <button type="button" class="modal-close" id="cropCloseBtn" aria-label="닫기">×</button>
+      </header>
+
+      <div class="crop-preview-wrap">
+        <canvas id="cropCanvas" width="960" height="600"></canvas>
+      </div>
+      <p class="crop-help"><strong>흰색 테두리의 모서리나 변을 직접 잡아당겨 자를 영역을 조정할 수 있습니다.</strong> 선택 영역 안쪽을 끌면 영역 전체가 이동하며, 아래 슬라이더로 미세 조정할 수도 있습니다.</p>
+
+      <div class="crop-controls">
+        <label class="crop-field">
+          <span>위쪽 자르기 <output id="cropTopValue">0%</output></span>
+          <input type="range" id="cropTop" min="0" max="85" step="0.1" value="0" />
+        </label>
+        <label class="crop-field">
+          <span>아래쪽 자르기 <output id="cropBottomValue">0%</output></span>
+          <input type="range" id="cropBottom" min="0" max="85" step="0.1" value="0" />
+        </label>
+        <label class="crop-field">
+          <span>왼쪽 자르기 <output id="cropLeftValue">0%</output></span>
+          <input type="range" id="cropLeft" min="0" max="85" step="0.1" value="0" />
+        </label>
+        <label class="crop-field">
+          <span>오른쪽 자르기 <output id="cropRightValue">0%</output></span>
+          <input type="range" id="cropRight" min="0" max="85" step="0.1" value="0" />
+        </label>
+      </div>
+
+      <div class="crop-actions">
+        <div>
+          <button type="button" class="secondary-button" id="cropAutoBtn">자동으로 자르기</button>
+          <button type="button" class="secondary-button" id="cropResetBtn">원본으로</button>
+        </div>
+        <div>
+          <button type="button" class="secondary-button" id="cropCancelBtn">취소</button>
+          <button type="button" class="primary-button" id="cropApplyBtn">자르기 적용</button>
+        </div>
+      </div>
+    </section>
+  </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
