@@ -13,6 +13,14 @@ const state = {
   secretKeyBuffer: "",
 };
 
+const PAGE_PRESETS = {
+  "4200x2970": { name: "A3 가로형", printWidthMm: 420, printHeightMm: 297 },
+  "2970x2100": { name: "A4 가로형", printWidthMm: 297, printHeightMm: 210 },
+  "3640x2570": { name: "B4 가로형", printWidthMm: 364, printHeightMm: 257 },
+  "1920x1080": { name: "16:9 가로형", printWidthMm: 297, printHeightMm: 167.063 },
+  "2560x1440": { name: "16:9 가로형 고화질", printWidthMm: 297, printHeightMm: 167.063 },
+};
+
 const elements = {
   conteDate: document.getElementById("conteDate"),
   fileName: document.getElementById("fileName"),
@@ -453,7 +461,8 @@ function renderPreviewPages() {
   });
 
   const pageCount = pages.length;
-  elements.pageSummary.textContent = `${state.items.length}곡 · ${pageCount}페이지 · ${pageWidth.toLocaleString()} × ${pageHeight.toLocaleString()}px`;
+  const pagePreset = getSelectedPagePreset();
+  elements.pageSummary.textContent = `${state.items.length}곡 · ${pageCount}페이지 · ${pagePreset.name} · ${pageWidth.toLocaleString()} × ${pageHeight.toLocaleString()}px`;
   elements.downloadBtn.disabled = false;
   elements.printBtn.disabled = false;
 }
@@ -1070,9 +1079,49 @@ function launchEasterConfetti() {
   }
 }
 
+function getSelectedPagePreset() {
+  return PAGE_PRESETS[elements.pageSizeSelect.value] || PAGE_PRESETS["4200x2970"];
+}
+
+function applyPrintPageSize() {
+  const preset = getSelectedPagePreset();
+  let style = document.getElementById("dynamicPrintPageSize");
+  if (!style) {
+    style = document.createElement("style");
+    style.id = "dynamicPrintPageSize";
+    document.head.appendChild(style);
+  }
+
+  const width = preset.printWidthMm;
+  const height = preset.printHeightMm;
+  style.textContent = `
+    @page { size: ${width}mm ${height}mm; margin: 0; }
+    @media print {
+      html, body {
+        width: ${width}mm !important;
+        min-width: ${width}mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .page-preview {
+        width: ${width}mm !important;
+        height: ${height}mm !important;
+        overflow: hidden !important;
+      }
+      .page-preview canvas {
+        width: ${width}mm !important;
+        height: ${height}mm !important;
+        object-fit: fill !important;
+      }
+    }
+  `;
+}
+
 function printPages() {
   if (!state.canvases.length) return;
-  showToast("인쇄 창에서 실제 프린터 또는 PDF 저장을 선택해 주세요.");
+  applyPrintPageSize();
+  const preset = getSelectedPagePreset();
+  showToast(`${preset.name} 크기로 인쇄 창을 엽니다. 실제 프린터 또는 PDF 저장을 선택해 주세요.`);
   window.setTimeout(() => window.print(), 200);
 }
 
@@ -1114,7 +1163,7 @@ function resetAll() {
   state.items = [];
   state.canvases = [];
   elements.columnsSelect.value = "3";
-  elements.pageSizeSelect.value = "1920x1080";
+  elements.pageSizeSelect.value = "4200x2970";
   elements.autoTrim.checked = true;
   elements.showDividers.checked = false;
   elements.conteDate.value = formatDateInput(new Date());

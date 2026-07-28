@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="악보 이미지를 자동으로 정리해 찬양 콘티 이미지를 만드는 웹 도구" />
-  <title>Worship Setlist Maker</title>
-  <link rel="stylesheet" href="style.css?v=9" />
+  <title>Worship SETLIST Maker</title>
+  <link rel="stylesheet" href="style.css?v=10" />
 </head>
 <body>
   <header class="app-header">
     <div>
-      <p class="eyebrow">찬양 콘티 자동 편집기</p>
-      <h1>WORSHIP SETLIST MAKER</h1>
+      <p class="eyebrow">WORSHIP SETLIST MAKER</p>
+      <h1>찬양 콘티 자동 편집기</h1>
       <p class="subtitle">악보 이미지를 넣으면 같은 크기로 정리해 한 장의 콘티로 만들어드립니다.</p>
     </div>
     <span class="privacy-badge">이미지는 브라우저 안에서만 처리됩니다</span>
@@ -50,9 +50,11 @@
         <label class="field">
           <span>페이지 크기</span>
           <select id="pageSizeSelect">
-            <option value="1920x1080" selected>16:9 가로형 · 1920 × 1080</option>
+            <option value="4200x2970" selected>A3 가로형 · 4200 × 2970</option>
+            <option value="2970x2100">A4 가로형 · 2970 × 2100</option>
+            <option value="3640x2570">B4 가로형 · 3640 × 2570</option>
+            <option value="1920x1080">16:9 가로형 · 1920 × 1080</option>
             <option value="2560x1440">16:9 가로형 · 2560 × 1440</option>
-            <option value="2970x2100">A4 가로형 · 고화질</option>
           </select>
         </label>
       </div>
@@ -96,7 +98,7 @@
       <div class="toolbar">
         <div class="toolbar-actions">
           <button type="button" class="secondary-button" id="addMoreBtn">이미지 더 추가</button>
-          <button type="button" class="secondary-button bulk-fit-button" id="stretchAllBtn" disabled>모든 악보 세로로 늘려 채우기</button>
+          <button type="button" class="secondary-button bulk-fit-button" id="stretchAllBtn" disabled>모든 악보 세로로 채우기</button>
         </div>
         <p>카드를 끌어서 순서를 변경하고, 곡별로 여백을 자를 수 있습니다.</p>
       </div>
@@ -147,8 +149,8 @@
     <section class="easter-dialog" role="dialog" aria-modal="true" aria-labelledby="easterTitle">
       <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
       <button type="button" class="modal-close easter-close" id="easterCloseBtn" aria-label="닫기">×</button>
-      <p class="eyebrow">HYEIN'S HIDDEN MESSEAGE</p>
-      <h2 id="easterTitle">❤️신지교회 사랑합니다❤️</h2>
+      <p class="eyebrow">HYEIN'S HIDDEN MESSAGE</p>
+      <h2 id="easterTitle">❤️신지교회 사랑해요❤️</h2>
       <p class="easter-message">함께 찬양할 수 있음이 은혜입니다.</p>
 
       <div class="youth-photo-frame">
@@ -215,6 +217,6 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="app.js?v=9"></script>
+  <script src="app.js?v=10"></script>
 </body>
 </html>
