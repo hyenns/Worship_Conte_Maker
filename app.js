@@ -21,6 +21,7 @@ const elements = {
   dropZone: document.getElementById("dropZone"),
   fileInput: document.getElementById("fileInput"),
   addMoreBtn: document.getElementById("addMoreBtn"),
+  stretchAllBtn: document.getElementById("stretchAllBtn"),
   imageCount: document.getElementById("imageCount"),
   imageList: document.getElementById("imageList"),
   previewPages: document.getElementById("previewPages"),
@@ -63,6 +64,7 @@ function bindEvents() {
   });
 
   elements.addMoreBtn.addEventListener("click", () => elements.fileInput.click());
+  elements.stretchAllBtn.addEventListener("click", stretchAllImages);
   elements.fileInput.addEventListener("change", async (event) => {
     await addFiles(event.target.files);
     event.target.value = "";
@@ -182,6 +184,7 @@ function loadImage(src) {
 
 function renderImageList() {
   elements.imageCount.textContent = `${state.items.length}곡`;
+  elements.stretchAllBtn.disabled = state.items.length === 0;
 
   if (!state.items.length) {
     elements.imageList.className = "image-list empty";
@@ -322,6 +325,19 @@ function bindCardEvents(card, index) {
     renderImageList();
     requestRender();
   });
+}
+
+
+function stretchAllImages() {
+  if (!state.items.length) return;
+
+  state.items.forEach((item) => {
+    item.fitMode = "stretchY";
+  });
+
+  renderImageList();
+  requestRender();
+  showToast(`${state.items.length}개 악보를 세로로 늘려 채웠습니다.`);
 }
 
 async function requestRender() {

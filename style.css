@@ -1171,3 +1171,26 @@ body.modal-open {
     text-align: left;
   }
 }
+
+
+/* v5: 전체 악보 배치 방식을 한 번에 적용하는 버튼 */
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bulk-fit-button {
+  white-space: nowrap;
+}
+
+@media (max-width: 680px) {
+  .toolbar-actions {
+    width: 100%;
+  }
+
+  .toolbar-actions .secondary-button {
+    flex: 1 1 150px;
+  }
+}
