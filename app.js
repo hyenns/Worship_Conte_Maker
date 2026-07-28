@@ -5,6 +5,7 @@ const state = {
   canvases: [],
   dragIndex: null,
   renderToken: 0,
+  cropTargetIndex: null,
 };
 
 const elements = {
@@ -25,6 +26,22 @@ const elements = {
   downloadBtn: document.getElementById("downloadBtn"),
   printBtn: document.getElementById("printBtn"),
   toast: document.getElementById("toast"),
+  cropModal: document.getElementById("cropModal"),
+  cropCanvas: document.getElementById("cropCanvas"),
+  cropFileName: document.getElementById("cropFileName"),
+  cropTop: document.getElementById("cropTop"),
+  cropBottom: document.getElementById("cropBottom"),
+  cropLeft: document.getElementById("cropLeft"),
+  cropRight: document.getElementById("cropRight"),
+  cropTopValue: document.getElementById("cropTopValue"),
+  cropBottomValue: document.getElementById("cropBottomValue"),
+  cropLeftValue: document.getElementById("cropLeftValue"),
+  cropRightValue: document.getElementById("cropRightValue"),
+  cropAutoBtn: document.getElementById("cropAutoBtn"),
+  cropResetBtn: document.getElementById("cropResetBtn"),
+  cropCancelBtn: document.getElementById("cropCancelBtn"),
+  cropApplyBtn: document.getElementById("cropApplyBtn"),
+  cropCloseBtn: document.getElementById("cropCloseBtn"),
 };
 
 init();
@@ -76,10 +93,23 @@ function bindEvents() {
 
   elements.resetBtn.addEventListener("click", resetAll);
   elements.downloadBtn.addEventListener("click", downloadAllPages);
-  elements.printBtn.addEventListener("click", () => {
-    if (!state.canvases.length) return;
-    showToast("인쇄 창에서 프린터를 ‘PDF로 저장’으로 선택해 주세요.");
-    window.setTimeout(() => window.print(), 250);
+  elements.printBtn.addEventListener("click", printPages);
+
+  [elements.cropTop, elements.cropBottom, elements.cropLeft, elements.cropRight].forEach((input) => {
+    input.addEventListener("input", () => {
+      clampCropInputs(input.id);
+      updateCropPreview();
+    });
+  });
+
+  elements.cropAutoBtn.addEventListener("click", setCropToAutoBounds);
+  elements.cropResetBtn.addEventListener("click", () => setCropInputs({ top: 0, bottom: 0, left: 0, right: 0 }));
+  elements.cropApplyBtn.addEventListener("click", applyManualCrop);
+  elements.cropCancelBtn.addEventListener("click", closeCropModal);
+  elements.cropCloseBtn.addEventListener("click", closeCropModal);
+  document.querySelectorAll("[data-crop-close]").forEach((element) => element.addEventListener("click", closeCropModal));
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !elements.cropModal.hidden) closeCropModal();
   });
 }
 
@@ -104,8 +134,10 @@ async function addFiles(fileList) {
         image,
         dataUrl,
         zoom: 100,
-        align: "center",
-        trimRect: null,
+        align: "top",
+        fitMode: "contain",
+        autoTrimRect: null,
+        manualCropRect: null,
       });
     } catch (error) {
       console.error(error);
@@ -117,9 +149,7 @@ async function addFiles(fileList) {
   renderImageList();
   await requestRender();
 
-  if (loadedItems.length) {
-    showToast(`${loadedItems.length}개의 악보 이미지를 추가했습니다.`);
-  }
+  if (loadedItems.length) showToast(`${loadedItems.length}개의 악보 이미지를 추가했습니다.`);
 }
 
 function readFileAsDataUrl(file) {
@@ -168,11 +198,12 @@ function renderImageList() {
         <div class="card-title-row">
           <span class="order-badge">${index + 1}</span>
           <p class="card-name" title="${escapeHtml(item.fileName)}">${escapeHtml(item.name)}</p>
+          ${item.manualCropRect ? '<span class="crop-status">수동 자르기 적용</span>' : ""}
         </div>
         <div class="card-controls">
           <label class="mini-field">
             확대·축소 <span class="zoom-value">${item.zoom}%</span>
-            <input type="range" min="80" max="145" step="1" value="${item.zoom}" data-action="zoom" />
+            <input type="range" min="70" max="160" step="1" value="${item.zoom}" data-action="zoom" />
           </label>
           <label class="mini-field">
             세로 정렬
@@ -182,6 +213,17 @@ function renderImageList() {
               <option value="bottom" ${item.align === "bottom" ? "selected" : ""}>아래쪽</option>
             </select>
           </label>
+          <label class="mini-field">
+            배치 방식
+            <select data-action="fitMode">
+              <option value="contain" ${item.fitMode === "contain" ? "selected" : ""}>비율 유지</option>
+              <option value="stretchY" ${item.fitMode === "stretchY" ? "selected" : ""}>세로로 늘려 채우기</option>
+            </select>
+          </label>
+        </div>
+        <div class="card-action-row">
+          <button type="button" class="card-action-button" data-action="crop">여백 직접 자르기</button>
+          ${item.manualCropRect ? '<button type="button" class="card-action-button muted" data-action="clearCrop">수동 자르기 해제</button>' : ""}
         </div>
       </div>
       <button type="button" class="remove-button" data-action="remove" title="삭제" aria-label="${escapeHtml(item.name)} 삭제">×</button>`;
@@ -195,6 +237,9 @@ function bindCardEvents(card, index) {
   const zoomInput = card.querySelector('[data-action="zoom"]');
   const zoomValue = card.querySelector(".zoom-value");
   const alignSelect = card.querySelector('[data-action="align"]');
+  const fitModeSelect = card.querySelector('[data-action="fitMode"]');
+  const cropButton = card.querySelector('[data-action="crop"]');
+  const clearCropButton = card.querySelector('[data-action="clearCrop"]');
   const removeButton = card.querySelector('[data-action="remove"]');
 
   zoomInput.addEventListener("input", () => {
@@ -208,6 +253,22 @@ function bindCardEvents(card, index) {
     requestRender();
   });
 
+  fitModeSelect.addEventListener("change", () => {
+    state.items[index].fitMode = fitModeSelect.value;
+    requestRender();
+  });
+
+  cropButton.addEventListener("click", () => openCropModal(index));
+
+  if (clearCropButton) {
+    clearCropButton.addEventListener("click", () => {
+      state.items[index].manualCropRect = null;
+      renderImageList();
+      requestRender();
+      showToast("수동 자르기를 해제했습니다.");
+    });
+  }
+
   removeButton.addEventListener("click", () => {
     state.items.splice(index, 1);
     renderImageList();
@@ -215,6 +276,10 @@ function bindCardEvents(card, index) {
   });
 
   card.addEventListener("dragstart", (event) => {
+    if (event.target.closest("button, input, select, label")) {
+      event.preventDefault();
+      return;
+    }
     state.dragIndex = index;
     card.classList.add("dragging");
     event.dataTransfer.effectAllowed = "move";
@@ -230,9 +295,7 @@ function bindCardEvents(card, index) {
 
   card.addEventListener("dragover", (event) => {
     event.preventDefault();
-    if (state.dragIndex !== null && state.dragIndex !== index) {
-      card.classList.add("drag-target");
-    }
+    if (state.dragIndex !== null && state.dragIndex !== index) card.classList.add("drag-target");
   });
 
   card.addEventListener("dragleave", () => card.classList.remove("drag-target"));
@@ -242,7 +305,6 @@ function bindCardEvents(card, index) {
     card.classList.remove("drag-target");
     const fromIndex = state.dragIndex;
     const toIndex = index;
-
     if (fromIndex === null || fromIndex === toIndex) return;
 
     const [moved] = state.items.splice(fromIndex, 1);
@@ -275,7 +337,7 @@ async function requestRender() {
     if (elements.autoTrim.checked) {
       await Promise.all(
         state.items.map(async (item) => {
-          if (!item.trimRect) item.trimRect = detectContentBounds(item.image);
+          if (!item.autoTrimRect) item.autoTrimRect = detectContentBounds(item.image);
         }),
       );
     }
@@ -366,21 +428,33 @@ function drawPage(canvas, pageItems, columns) {
   }
 }
 
-function drawImageIntoCell(context, item, cellX, cellY, cellWidth, cellHeight) {
-  const sourceRect = elements.autoTrim.checked
-    ? item.trimRect || { x: 0, y: 0, width: item.image.naturalWidth, height: item.image.naturalHeight }
-    : { x: 0, y: 0, width: item.image.naturalWidth, height: item.image.naturalHeight };
+function getSourceRect(item) {
+  if (item.manualCropRect) return item.manualCropRect;
+  if (elements.autoTrim.checked && item.autoTrimRect) return item.autoTrimRect;
+  return { x: 0, y: 0, width: item.image.naturalWidth, height: item.image.naturalHeight };
+}
 
+function drawImageIntoCell(context, item, cellX, cellY, cellWidth, cellHeight) {
+  const sourceRect = getSourceRect(item);
   const safePadding = Math.max(2, Math.round(cellWidth * 0.008));
   const availableWidth = cellWidth - safePadding * 2;
   const availableHeight = cellHeight - safePadding * 2;
-  const baseScale = Math.min(availableWidth / sourceRect.width, availableHeight / sourceRect.height);
   const zoomScale = item.zoom / 100;
-  const finalScale = baseScale * zoomScale;
-  const drawWidth = sourceRect.width * finalScale;
-  const drawHeight = sourceRect.height * finalScale;
-  const drawX = cellX + (cellWidth - drawWidth) / 2;
 
+  let drawWidth;
+  let drawHeight;
+
+  if (item.fitMode === "stretchY") {
+    drawWidth = availableWidth * zoomScale;
+    drawHeight = availableHeight * zoomScale;
+  } else {
+    const baseScale = Math.min(availableWidth / sourceRect.width, availableHeight / sourceRect.height);
+    const finalScale = baseScale * zoomScale;
+    drawWidth = sourceRect.width * finalScale;
+    drawHeight = sourceRect.height * finalScale;
+  }
+
+  const drawX = cellX + (cellWidth - drawWidth) / 2;
   let drawY;
   if (item.align === "top") {
     drawY = cellY + safePadding;
@@ -409,7 +483,7 @@ function drawImageIntoCell(context, item, cellX, cellY, cellWidth, cellHeight) {
 }
 
 function detectContentBounds(image) {
-  const maxScanSize = 1400;
+  const maxScanSize = 1500;
   const ratio = Math.min(1, maxScanSize / Math.max(image.naturalWidth, image.naturalHeight));
   const scanWidth = Math.max(1, Math.round(image.naturalWidth * ratio));
   const scanHeight = Math.max(1, Math.round(image.naturalHeight * ratio));
@@ -423,11 +497,10 @@ function detectContentBounds(image) {
   context.drawImage(image, 0, 0, scanWidth, scanHeight);
 
   const { data } = context.getImageData(0, 0, scanWidth, scanHeight);
-  const threshold = 244;
-  let minX = scanWidth;
-  let minY = scanHeight;
-  let maxX = -1;
-  let maxY = -1;
+  const cornerColors = getCornerColors(data, scanWidth, scanHeight);
+  const background = medianColor(cornerColors);
+  const rowCounts = new Uint32Array(scanHeight);
+  const columnCounts = new Uint32Array(scanWidth);
 
   for (let y = 0; y < scanHeight; y += 1) {
     for (let x = 0; x < scanWidth; x += 1) {
@@ -436,33 +509,240 @@ function detectContentBounds(image) {
       const green = data[index + 1];
       const blue = data[index + 2];
       const alpha = data[index + 3];
-      const isContent = alpha > 20 && (red < threshold || green < threshold || blue < threshold);
+      if (alpha < 20) continue;
 
+      const distance = Math.abs(red - background.r) + Math.abs(green - background.g) + Math.abs(blue - background.b);
+      const luminance = red * 0.299 + green * 0.587 + blue * 0.114;
+      const isContent = distance > 34 || luminance < 232;
       if (isContent) {
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
+        rowCounts[y] += 1;
+        columnCounts[x] += 1;
       }
     }
   }
 
-  if (maxX < minX || maxY < minY) {
+  const minRowPixels = Math.max(2, Math.round(scanWidth * 0.001));
+  const minColumnPixels = Math.max(2, Math.round(scanHeight * 0.001));
+  const minY = firstIndexAtLeast(rowCounts, minRowPixels);
+  const maxY = lastIndexAtLeast(rowCounts, minRowPixels);
+  const minX = firstIndexAtLeast(columnCounts, minColumnPixels);
+  const maxX = lastIndexAtLeast(columnCounts, minColumnPixels);
+
+  if (minX < 0 || minY < 0 || maxX < minX || maxY < minY) {
     return { x: 0, y: 0, width: image.naturalWidth, height: image.naturalHeight };
   }
 
-  const padding = Math.max(5, Math.round(Math.min(scanWidth, scanHeight) * 0.008));
-  minX = Math.max(0, minX - padding);
-  minY = Math.max(0, minY - padding);
-  maxX = Math.min(scanWidth - 1, maxX + padding);
-  maxY = Math.min(scanHeight - 1, maxY + padding);
+  const padding = Math.max(6, Math.round(Math.min(scanWidth, scanHeight) * 0.01));
+  const paddedMinX = Math.max(0, minX - padding);
+  const paddedMinY = Math.max(0, minY - padding);
+  const paddedMaxX = Math.min(scanWidth - 1, maxX + padding);
+  const paddedMaxY = Math.min(scanHeight - 1, maxY + padding);
 
   return {
-    x: Math.round(minX / ratio),
-    y: Math.round(minY / ratio),
-    width: Math.max(1, Math.round((maxX - minX + 1) / ratio)),
-    height: Math.max(1, Math.round((maxY - minY + 1) / ratio)),
+    x: Math.round(paddedMinX / ratio),
+    y: Math.round(paddedMinY / ratio),
+    width: Math.max(1, Math.round((paddedMaxX - paddedMinX + 1) / ratio)),
+    height: Math.max(1, Math.round((paddedMaxY - paddedMinY + 1) / ratio)),
   };
+}
+
+function getCornerColors(data, width, height) {
+  const sampleSize = Math.max(2, Math.round(Math.min(width, height) * 0.025));
+  const colors = [];
+  const origins = [
+    [0, 0],
+    [Math.max(0, width - sampleSize), 0],
+    [0, Math.max(0, height - sampleSize)],
+    [Math.max(0, width - sampleSize), Math.max(0, height - sampleSize)],
+  ];
+
+  origins.forEach(([startX, startY]) => {
+    for (let y = startY; y < Math.min(height, startY + sampleSize); y += 2) {
+      for (let x = startX; x < Math.min(width, startX + sampleSize); x += 2) {
+        const index = (y * width + x) * 4;
+        colors.push({ r: data[index], g: data[index + 1], b: data[index + 2] });
+      }
+    }
+  });
+  return colors;
+}
+
+function medianColor(colors) {
+  if (!colors.length) return { r: 255, g: 255, b: 255 };
+  const reds = colors.map((color) => color.r).sort((a, b) => a - b);
+  const greens = colors.map((color) => color.g).sort((a, b) => a - b);
+  const blues = colors.map((color) => color.b).sort((a, b) => a - b);
+  const middle = Math.floor(colors.length / 2);
+  return { r: reds[middle], g: greens[middle], b: blues[middle] };
+}
+
+function firstIndexAtLeast(values, threshold) {
+  for (let index = 0; index < values.length; index += 1) {
+    if (values[index] >= threshold) return index;
+  }
+  return -1;
+}
+
+function lastIndexAtLeast(values, threshold) {
+  for (let index = values.length - 1; index >= 0; index -= 1) {
+    if (values[index] >= threshold) return index;
+  }
+  return -1;
+}
+
+function openCropModal(index) {
+  const item = state.items[index];
+  if (!item) return;
+  state.cropTargetIndex = index;
+  elements.cropFileName.textContent = item.fileName;
+
+  const baseRect = item.manualCropRect || item.autoTrimRect || {
+    x: 0,
+    y: 0,
+    width: item.image.naturalWidth,
+    height: item.image.naturalHeight,
+  };
+  setCropInputs(rectToCropPercentages(baseRect, item.image));
+  elements.cropModal.hidden = false;
+  document.body.classList.add("modal-open");
+  window.requestAnimationFrame(updateCropPreview);
+}
+
+function closeCropModal() {
+  elements.cropModal.hidden = true;
+  document.body.classList.remove("modal-open");
+  state.cropTargetIndex = null;
+}
+
+function rectToCropPercentages(rect, image) {
+  const width = image.naturalWidth;
+  const height = image.naturalHeight;
+  return {
+    top: (rect.y / height) * 100,
+    bottom: ((height - rect.y - rect.height) / height) * 100,
+    left: (rect.x / width) * 100,
+    right: ((width - rect.x - rect.width) / width) * 100,
+  };
+}
+
+function setCropInputs(values) {
+  elements.cropTop.value = clampNumber(values.top, 0, 85).toFixed(1);
+  elements.cropBottom.value = clampNumber(values.bottom, 0, 85).toFixed(1);
+  elements.cropLeft.value = clampNumber(values.left, 0, 85).toFixed(1);
+  elements.cropRight.value = clampNumber(values.right, 0, 85).toFixed(1);
+  clampCropInputs();
+  updateCropPreview();
+}
+
+function getCropValues() {
+  return {
+    top: Number(elements.cropTop.value),
+    bottom: Number(elements.cropBottom.value),
+    left: Number(elements.cropLeft.value),
+    right: Number(elements.cropRight.value),
+  };
+}
+
+function clampCropInputs(changedId = "") {
+  const values = getCropValues();
+  const maxCombined = 95;
+
+  if (values.top + values.bottom > maxCombined) {
+    if (changedId === "cropTop") values.bottom = maxCombined - values.top;
+    else values.top = maxCombined - values.bottom;
+  }
+  if (values.left + values.right > maxCombined) {
+    if (changedId === "cropLeft") values.right = maxCombined - values.left;
+    else values.left = maxCombined - values.right;
+  }
+
+  elements.cropTop.value = clampNumber(values.top, 0, 85).toFixed(1);
+  elements.cropBottom.value = clampNumber(values.bottom, 0, 85).toFixed(1);
+  elements.cropLeft.value = clampNumber(values.left, 0, 85).toFixed(1);
+  elements.cropRight.value = clampNumber(values.right, 0, 85).toFixed(1);
+
+  elements.cropTopValue.textContent = `${Number(elements.cropTop.value).toFixed(1)}%`;
+  elements.cropBottomValue.textContent = `${Number(elements.cropBottom.value).toFixed(1)}%`;
+  elements.cropLeftValue.textContent = `${Number(elements.cropLeft.value).toFixed(1)}%`;
+  elements.cropRightValue.textContent = `${Number(elements.cropRight.value).toFixed(1)}%`;
+}
+
+function setCropToAutoBounds() {
+  const item = state.items[state.cropTargetIndex];
+  if (!item) return;
+  item.autoTrimRect = detectContentBounds(item.image);
+  setCropInputs(rectToCropPercentages(item.autoTrimRect, item.image));
+}
+
+function updateCropPreview() {
+  const item = state.items[state.cropTargetIndex];
+  if (!item || elements.cropModal.hidden) return;
+
+  clampCropInputs();
+  const canvas = elements.cropCanvas;
+  const context = canvas.getContext("2d", { alpha: false });
+  const image = item.image;
+  const margin = 22;
+  const scale = Math.min(
+    (canvas.width - margin * 2) / image.naturalWidth,
+    (canvas.height - margin * 2) / image.naturalHeight,
+  );
+  const drawWidth = image.naturalWidth * scale;
+  const drawHeight = image.naturalHeight * scale;
+  const drawX = (canvas.width - drawWidth) / 2;
+  const drawY = (canvas.height - drawHeight) / 2;
+
+  context.fillStyle = "#e7e5df";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+
+  const values = getCropValues();
+  const cropX = drawX + drawWidth * (values.left / 100);
+  const cropY = drawY + drawHeight * (values.top / 100);
+  const cropWidth = drawWidth * (1 - (values.left + values.right) / 100);
+  const cropHeight = drawHeight * (1 - (values.top + values.bottom) / 100);
+
+  context.save();
+  context.fillStyle = "rgba(25, 25, 22, 0.56)";
+  context.beginPath();
+  context.rect(drawX, drawY, drawWidth, drawHeight);
+  context.rect(cropX, cropY, cropWidth, cropHeight);
+  context.fill("evenodd");
+  context.strokeStyle = "#ffffff";
+  context.lineWidth = 3;
+  context.setLineDash([12, 8]);
+  context.strokeRect(cropX, cropY, cropWidth, cropHeight);
+  context.restore();
+}
+
+function applyManualCrop() {
+  const item = state.items[state.cropTargetIndex];
+  if (!item) return;
+  const values = getCropValues();
+  const imageWidth = item.image.naturalWidth;
+  const imageHeight = item.image.naturalHeight;
+  const x = Math.round(imageWidth * values.left / 100);
+  const y = Math.round(imageHeight * values.top / 100);
+  const right = Math.round(imageWidth * values.right / 100);
+  const bottom = Math.round(imageHeight * values.bottom / 100);
+
+  item.manualCropRect = {
+    x,
+    y,
+    width: Math.max(1, imageWidth - x - right),
+    height: Math.max(1, imageHeight - y - bottom),
+  };
+
+  closeCropModal();
+  renderImageList();
+  requestRender();
+  showToast("선택한 여백 자르기를 적용했습니다.");
+}
+
+function printPages() {
+  if (!state.canvases.length) return;
+  showToast("인쇄 창에서 실제 프린터 또는 PDF 저장을 선택해 주세요.");
+  window.setTimeout(() => window.print(), 200);
 }
 
 function downloadAllPages() {
@@ -514,10 +794,12 @@ function resetAll() {
 
 function chunkArray(array, size) {
   const chunks = [];
-  for (let index = 0; index < array.length; index += size) {
-    chunks.push(array.slice(index, index + size));
-  }
+  for (let index = 0; index < array.length; index += size) chunks.push(array.slice(index, index + size));
   return chunks;
+}
+
+function clampNumber(value, minimum, maximum) {
+  return Math.min(maximum, Math.max(minimum, Number(value) || 0));
 }
 
 function formatDateInput(date) {
