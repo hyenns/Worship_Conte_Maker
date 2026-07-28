@@ -6,6 +6,8 @@ const state = {
   dragIndex: null,
   renderToken: 0,
   cropTargetIndex: null,
+  cropViewport: null,
+  cropDrag: null,
 };
 
 const elements = {
@@ -111,7 +113,15 @@ function bindEvents() {
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !elements.cropModal.hidden) closeCropModal();
   });
+
+  elements.cropCanvas.addEventListener("pointerdown", startCropPointerDrag);
+  elements.cropCanvas.addEventListener("pointermove", handleCropPointerMove);
+  elements.cropCanvas.addEventListener("pointerup", stopCropPointerDrag);
+  elements.cropCanvas.addEventListener("pointercancel", stopCropPointerDrag);
+  elements.cropCanvas.addEventListener("pointerleave", handleCropPointerLeave);
+  elements.cropCanvas.addEventListener("contextmenu", (event) => event.preventDefault());
 }
+
 
 async function addFiles(fileList) {
   const imageFiles = Array.from(fileList || []).filter((file) => file.type.startsWith("image/"));
@@ -609,9 +619,13 @@ function openCropModal(index) {
 }
 
 function closeCropModal() {
+  if (state.cropDrag) stopCropPointerDrag({ pointerId: state.cropDrag.pointerId });
   elements.cropModal.hidden = true;
   document.body.classList.remove("modal-open");
   state.cropTargetIndex = null;
+  state.cropViewport = null;
+  state.cropDrag = null;
+  elements.cropCanvas.style.cursor = "default";
 }
 
 function rectToCropPercentages(rect, image) {
@@ -702,17 +716,218 @@ function updateCropPreview() {
   const cropWidth = drawWidth * (1 - (values.left + values.right) / 100);
   const cropHeight = drawHeight * (1 - (values.top + values.bottom) / 100);
 
+  state.cropViewport = {
+    drawX,
+    drawY,
+    drawWidth,
+    drawHeight,
+    cropX,
+    cropY,
+    cropWidth,
+    cropHeight,
+  };
+
   context.save();
   context.fillStyle = "rgba(25, 25, 22, 0.56)";
   context.beginPath();
   context.rect(drawX, drawY, drawWidth, drawHeight);
   context.rect(cropX, cropY, cropWidth, cropHeight);
   context.fill("evenodd");
+
   context.strokeStyle = "#ffffff";
   context.lineWidth = 3;
   context.setLineDash([12, 8]);
   context.strokeRect(cropX, cropY, cropWidth, cropHeight);
+  context.setLineDash([]);
+
+  drawCropHandles(context, cropX, cropY, cropWidth, cropHeight);
   context.restore();
+}
+
+function drawCropHandles(context, x, y, width, height) {
+  const handleSize = 16;
+  const half = handleSize / 2;
+  const points = getCropHandlePoints(x, y, width, height);
+
+  context.fillStyle = "#ffffff";
+  context.strokeStyle = "#596044";
+  context.lineWidth = 2;
+
+  Object.values(points).forEach((point) => {
+    context.beginPath();
+    context.rect(point.x - half, point.y - half, handleSize, handleSize);
+    context.fill();
+    context.stroke();
+  });
+}
+
+function getCropHandlePoints(x, y, width, height) {
+  const centerX = x + width / 2;
+  const centerY = y + height / 2;
+  const right = x + width;
+  const bottom = y + height;
+  return {
+    nw: { x, y },
+    n: { x: centerX, y },
+    ne: { x: right, y },
+    e: { x: right, y: centerY },
+    se: { x: right, y: bottom },
+    s: { x: centerX, y: bottom },
+    sw: { x, y: bottom },
+    w: { x, y: centerY },
+  };
+}
+
+function getCropCanvasPoint(event) {
+  const rect = elements.cropCanvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * (elements.cropCanvas.width / Math.max(1, rect.width)),
+    y: (event.clientY - rect.top) * (elements.cropCanvas.height / Math.max(1, rect.height)),
+  };
+}
+
+function hitTestCropControl(point) {
+  const viewport = state.cropViewport;
+  if (!viewport) return null;
+
+  const displayRect = elements.cropCanvas.getBoundingClientRect();
+  const scaleToCanvas = elements.cropCanvas.width / Math.max(1, displayRect.width);
+  const tolerance = 18 * scaleToCanvas;
+  const handles = getCropHandlePoints(
+    viewport.cropX,
+    viewport.cropY,
+    viewport.cropWidth,
+    viewport.cropHeight,
+  );
+
+  const order = ["nw", "ne", "se", "sw", "n", "e", "s", "w"];
+  for (const key of order) {
+    const handle = handles[key];
+    if (Math.abs(point.x - handle.x) <= tolerance && Math.abs(point.y - handle.y) <= tolerance) {
+      return key;
+    }
+  }
+
+  const withinX = point.x >= viewport.cropX && point.x <= viewport.cropX + viewport.cropWidth;
+  const withinY = point.y >= viewport.cropY && point.y <= viewport.cropY + viewport.cropHeight;
+  return withinX && withinY ? "move" : null;
+}
+
+function startCropPointerDrag(event) {
+  if (elements.cropModal.hidden || !state.cropViewport) return;
+  const point = getCropCanvasPoint(event);
+  const mode = hitTestCropControl(point);
+  if (!mode) return;
+
+  event.preventDefault();
+  elements.cropCanvas.setPointerCapture(event.pointerId);
+  state.cropDrag = {
+    pointerId: event.pointerId,
+    mode,
+    startPoint: point,
+    initialValues: getCropValues(),
+  };
+  elements.cropCanvas.classList.add("is-cropping");
+  elements.cropCanvas.style.cursor = getCropCursor(mode);
+}
+
+function handleCropPointerMove(event) {
+  if (elements.cropModal.hidden || !state.cropViewport) return;
+  const point = getCropCanvasPoint(event);
+
+  if (!state.cropDrag) {
+    elements.cropCanvas.style.cursor = getCropCursor(hitTestCropControl(point));
+    return;
+  }
+  if (event.pointerId !== state.cropDrag.pointerId) return;
+
+  event.preventDefault();
+  const viewport = state.cropViewport;
+  const dx = ((point.x - state.cropDrag.startPoint.x) / viewport.drawWidth) * 100;
+  const dy = ((point.y - state.cropDrag.startPoint.y) / viewport.drawHeight) * 100;
+  const values = { ...state.cropDrag.initialValues };
+  const mode = state.cropDrag.mode;
+
+  if (mode === "move") {
+    moveCropSelection(values, dx, dy);
+  } else {
+    if (mode.includes("n")) values.top += dy;
+    if (mode.includes("s")) values.bottom -= dy;
+    if (mode.includes("w")) values.left += dx;
+    if (mode.includes("e")) values.right -= dx;
+    normalizeCropValues(values, mode);
+  }
+
+  setCropInputs(values);
+}
+
+function stopCropPointerDrag(event = {}) {
+  if (!state.cropDrag) return;
+  if (event.pointerId !== undefined && event.pointerId !== state.cropDrag.pointerId) return;
+
+  const pointerId = state.cropDrag.pointerId;
+  try {
+    if (elements.cropCanvas.hasPointerCapture(pointerId)) {
+      elements.cropCanvas.releasePointerCapture(pointerId);
+    }
+  } catch (error) {
+    // 포인터 캡처가 이미 해제된 경우 무시합니다.
+  }
+
+  state.cropDrag = null;
+  elements.cropCanvas.classList.remove("is-cropping");
+}
+
+function handleCropPointerLeave(event) {
+  if (!state.cropDrag) elements.cropCanvas.style.cursor = "default";
+  if (state.cropDrag && event.buttons === 0) stopCropPointerDrag(event);
+}
+
+function moveCropSelection(values, dx, dy) {
+  const visibleWidth = 100 - values.left - values.right;
+  const visibleHeight = 100 - values.top - values.bottom;
+
+  let left = values.left + dx;
+  let top = values.top + dy;
+  left = clampNumber(left, 0, 100 - visibleWidth);
+  top = clampNumber(top, 0, 100 - visibleHeight);
+
+  values.left = left;
+  values.right = 100 - visibleWidth - left;
+  values.top = top;
+  values.bottom = 100 - visibleHeight - top;
+}
+
+function normalizeCropValues(values, changedMode = "") {
+  const minimumVisible = 5;
+  values.top = clampNumber(values.top, 0, 95);
+  values.bottom = clampNumber(values.bottom, 0, 95);
+  values.left = clampNumber(values.left, 0, 95);
+  values.right = clampNumber(values.right, 0, 95);
+
+  if (values.top + values.bottom > 100 - minimumVisible) {
+    if (changedMode.includes("n")) values.top = 100 - minimumVisible - values.bottom;
+    else values.bottom = 100 - minimumVisible - values.top;
+  }
+  if (values.left + values.right > 100 - minimumVisible) {
+    if (changedMode.includes("w")) values.left = 100 - minimumVisible - values.right;
+    else values.right = 100 - minimumVisible - values.left;
+  }
+}
+
+function getCropCursor(mode) {
+  const cursors = {
+    nw: "nwse-resize",
+    se: "nwse-resize",
+    ne: "nesw-resize",
+    sw: "nesw-resize",
+    n: "ns-resize",
+    s: "ns-resize",
+    e: "ew-resize",
+    w: "ew-resize",
+    move: "move",
+  };
+  return cursors[mode] || "default";
 }
 
 function applyManualCrop() {
