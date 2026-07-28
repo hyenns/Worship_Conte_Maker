@@ -237,10 +237,14 @@ function renderImageList() {
           ${item.manualCropRect ? '<span class="crop-status">수동 자르기 적용</span>' : ""}
         </div>
         <div class="card-controls">
-          <label class="mini-field">
-            확대·축소 <span class="zoom-value">${item.zoom}%</span>
-            <input type="range" min="70" max="160" step="1" value="${item.zoom}" data-action="zoom" />
-          </label>
+          <div class="mini-field zoom-field">
+            <span class="mini-field-label">확대·축소 <span class="zoom-value">${item.zoom}%</span></span>
+            <div class="zoom-control-row">
+              <button type="button" class="zoom-step-button" data-action="zoomOut" aria-label="${escapeHtml(item.name)} 축소">−</button>
+              <input type="range" min="70" max="160" step="1" value="${item.zoom}" data-action="zoom" aria-label="${escapeHtml(item.name)} 확대·축소" />
+              <button type="button" class="zoom-step-button" data-action="zoomIn" aria-label="${escapeHtml(item.name)} 확대">＋</button>
+            </div>
+          </div>
           <label class="mini-field">
             세로 정렬
             <select data-action="align">
@@ -272,17 +276,30 @@ function renderImageList() {
 function bindCardEvents(card, index) {
   const zoomInput = card.querySelector('[data-action="zoom"]');
   const zoomValue = card.querySelector(".zoom-value");
+  const zoomOutButton = card.querySelector('[data-action="zoomOut"]');
+  const zoomInButton = card.querySelector('[data-action="zoomIn"]');
   const alignSelect = card.querySelector('[data-action="align"]');
   const fitModeSelect = card.querySelector('[data-action="fitMode"]');
   const cropButton = card.querySelector('[data-action="crop"]');
   const clearCropButton = card.querySelector('[data-action="clearCrop"]');
   const removeButton = card.querySelector('[data-action="remove"]');
 
-  zoomInput.addEventListener("input", () => {
-    state.items[index].zoom = Number(zoomInput.value);
-    zoomValue.textContent = `${zoomInput.value}%`;
+  const setZoom = (nextZoom) => {
+    const minZoom = Number(zoomInput.min);
+    const maxZoom = Number(zoomInput.max);
+    const normalizedZoom = Math.min(maxZoom, Math.max(minZoom, Math.round(nextZoom)));
+    state.items[index].zoom = normalizedZoom;
+    zoomInput.value = String(normalizedZoom);
+    zoomValue.textContent = `${normalizedZoom}%`;
+    zoomOutButton.disabled = normalizedZoom <= minZoom;
+    zoomInButton.disabled = normalizedZoom >= maxZoom;
     requestRender();
-  });
+  };
+
+  zoomInput.addEventListener("input", () => setZoom(Number(zoomInput.value)));
+  zoomOutButton.addEventListener("click", () => setZoom(state.items[index].zoom - 1));
+  zoomInButton.addEventListener("click", () => setZoom(state.items[index].zoom + 1));
+  setZoom(state.items[index].zoom);
 
   alignSelect.addEventListener("change", () => {
     state.items[index].align = alignSelect.value;

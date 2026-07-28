@@ -1397,3 +1397,63 @@ body.modal-open {
     display: none !important;
   }
 }
+
+
+/* v9: 확대·축소 슬라이더 양옆에 미세 조정 버튼 추가 */
+.mini-field-label {
+  display: block;
+}
+
+.zoom-control-row {
+  display: grid;
+  grid-template-columns: 29px minmax(0, 1fr) 29px;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+
+.zoom-control-row input[type="range"] {
+  min-width: 0;
+  margin: 0;
+}
+
+.zoom-step-button {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--accent-dark);
+  background: #f8f7f2;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+  transition: border-color 0.16s ease, background 0.16s ease, transform 0.08s ease;
+}
+
+.zoom-step-button:hover:not(:disabled) {
+  border-color: #b7baa9;
+  background: var(--accent-soft);
+}
+
+.zoom-step-button:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.zoom-step-button:focus-visible {
+  outline: 2px solid rgba(110, 119, 84, 0.35);
+  outline-offset: 1px;
+}
+
+@container control-panel (max-width: 470px) {
+  .zoom-control-row {
+    grid-template-columns: 32px minmax(0, 1fr) 32px;
+  }
+
+  .zoom-step-button {
+    width: 32px;
+    height: 32px;
+  }
+}
