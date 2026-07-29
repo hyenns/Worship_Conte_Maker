@@ -1457,3 +1457,14 @@ body.modal-open {
     height: 32px;
   }
 }
+
+/* v11: 넓은 2단 화면에서는 안내 문구를 의미 단위로 줄바꿈 */
+.wide-only-break {
+  display: none;
+}
+
+@media (min-width: 1361px) {
+  .wide-only-break {
+    display: inline;
+  }
+}
