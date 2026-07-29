@@ -69,6 +69,7 @@ init();
 function init() {
   elements.conteDate.value = formatDateInput(new Date());
   bindEvents();
+  requestRender();
 }
 
 function bindEvents() {
@@ -388,20 +389,31 @@ function stretchAllImages() {
   showToast(`${state.items.length}개 악보를 세로로 늘려 채웠습니다.`);
 }
 
+function renderEmptyPreview() {
+  const columns = Number(elements.columnsSelect.value);
+  const [pageWidth, pageHeight] = elements.pageSizeSelect.value.split("x").map(Number);
+  const pagePreset = getSelectedPagePreset();
+  const columnMarkers = Array.from({ length: columns }, (_, index) => `<span>${index + 1}</span>`).join("");
+
+  state.canvases = [];
+  elements.previewPages.className = "preview-pages empty-preview";
+  elements.previewPages.innerHTML = `
+    <div class="preview-placeholder">
+      <div class="placeholder-page" style="--placeholder-columns: ${columns}; aspect-ratio: ${pageWidth} / ${pageHeight};">
+        ${columnMarkers}
+      </div>
+      <strong>완성된 콘티가 여기에 표시됩니다.</strong>
+    </div>`;
+  elements.pageSummary.textContent = `${columns}곡 배치 · ${pagePreset.name} · ${pageWidth.toLocaleString()} × ${pageHeight.toLocaleString()}px`;
+  elements.downloadBtn.disabled = true;
+  elements.printBtn.disabled = true;
+}
+
 async function requestRender() {
   const token = ++state.renderToken;
 
   if (!state.items.length) {
-    state.canvases = [];
-    elements.previewPages.className = "preview-pages empty-preview";
-    elements.previewPages.innerHTML = `
-      <div class="preview-placeholder">
-        <div class="placeholder-page"><span>1</span><span>2</span><span>3</span></div>
-        <strong>완성된 콘티가 여기에 표시됩니다.</strong>
-      </div>`;
-    elements.pageSummary.textContent = "이미지를 추가하면 미리보기가 생성됩니다.";
-    elements.downloadBtn.disabled = true;
-    elements.printBtn.disabled = true;
+    renderEmptyPreview();
     return;
   }
 

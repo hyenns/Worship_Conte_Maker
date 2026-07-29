@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="악보 이미지를 자동으로 정리해 찬양 콘티 이미지를 만드는 웹 도구" />
   <title>Worship Setlist Maker</title>
-  <link rel="stylesheet" href="style.css?v=11" />
+  <link rel="stylesheet" href="style.css?v=12" />
 </head>
 <body>
   <header class="app-header">
@@ -130,7 +130,7 @@
 
       <div id="previewPages" class="preview-pages empty-preview">
         <div class="preview-placeholder">
-          <div class="placeholder-page">
+          <div class="placeholder-page" style="--placeholder-columns: 3; aspect-ratio: 4200 / 2970;">
             <span>1</span><span>2</span><span>3</span>
           </div>
           <strong>완성된 콘티가 여기에 표시됩니다.</strong>
@@ -217,6 +217,6 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="app.js?v=11"></script>
+  <script src="app.js?v=12"></script>
 </body>
 </html>

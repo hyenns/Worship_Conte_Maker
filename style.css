@@ -592,7 +592,7 @@ h1 {
 
 .placeholder-page {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(var(--placeholder-columns, 3), 1fr);
   width: min(100%, 620px);
   aspect-ratio: 16 / 9;
   margin: 0 auto 18px;
