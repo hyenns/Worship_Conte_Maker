@@ -1468,3 +1468,248 @@ body.modal-open {
     display: inline;
   }
 }
+
+
+/* v13: iPhone/iPad 모바일 화면 최적화 */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.field,
+.field input,
+.field select,
+.setting-grid,
+.toggle-control,
+.app-header > div {
+  min-width: 0;
+}
+
+.field input,
+.field select {
+  max-width: 100%;
+}
+
+/* iOS Safari의 date 입력창 고유 최소 너비 때문에 카드 밖으로 넘치는 현상 방지 */
+.field input[type="date"] {
+  display: block;
+  min-width: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+@media (max-width: 680px) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .app-header,
+  .app-shell {
+    width: calc(100% - 20px);
+  }
+
+  .app-header {
+    gap: 15px;
+    padding: 24px 2px 20px;
+  }
+
+  .eyebrow {
+    margin-bottom: 7px;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+  }
+
+  h1 {
+    margin-bottom: 10px;
+    font-size: clamp(27px, 8.4vw, 36px);
+    line-height: 1.06;
+    letter-spacing: -0.045em;
+    overflow-wrap: anywhere;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    line-height: 1.55;
+    word-break: keep-all;
+  }
+
+  .privacy-badge {
+    align-self: flex-start;
+    max-width: 100%;
+    min-height: 36px;
+    padding: 8px 13px;
+    white-space: normal;
+    line-height: 1.35;
+  }
+
+  .app-shell {
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .control-panel,
+  .preview-panel {
+    padding: 15px;
+    border-radius: 18px;
+  }
+
+  .section-heading {
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .section-heading h2 {
+    font-size: 18px;
+  }
+
+  .step {
+    width: 26px;
+    height: 26px;
+  }
+
+  .setting-grid {
+    gap: 13px;
+  }
+
+  .field {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .field > span {
+    font-size: 12px;
+  }
+
+  .field input,
+  .field select {
+    width: 100%;
+    height: 48px;
+    padding-right: 12px;
+    font-size: 16px;
+  }
+
+  .toggle-row {
+    margin: 15px 0 24px;
+  }
+
+  .toggle-control {
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 11px;
+    padding: 13px 12px;
+  }
+
+  .toggle-control strong {
+    font-size: 13px;
+  }
+
+  .toggle-control small {
+    font-size: 11px;
+    word-break: keep-all;
+  }
+
+  .drop-zone {
+    min-height: 170px;
+    padding: 24px 16px;
+  }
+
+  .toolbar {
+    gap: 10px;
+  }
+
+  .toolbar-actions .secondary-button {
+    min-width: 0;
+  }
+
+  .preview-panel {
+    min-height: 520px;
+  }
+
+  .preview-pages {
+    min-height: 380px;
+  }
+
+  .placeholder-page {
+    margin-bottom: 14px;
+  }
+
+  .toast {
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    max-width: calc(100% - 24px);
+  }
+
+  .modal {
+    padding: max(12px, env(safe-area-inset-top, 0px)) 10px max(12px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .crop-dialog,
+  .easter-dialog {
+    max-height: calc(100dvh - 24px);
+  }
+}
+
+@media (max-width: 430px) {
+  .app-header,
+  .app-shell {
+    width: calc(100% - 16px);
+  }
+
+  .app-header {
+    padding-top: 20px;
+  }
+
+  h1 {
+    font-size: clamp(25px, 8.2vw, 32px);
+  }
+
+  .subtitle {
+    font-size: 13px;
+  }
+
+  .control-panel,
+  .preview-panel {
+    padding: 13px;
+    border-radius: 16px;
+  }
+
+  .section-heading h2 {
+    font-size: 17px;
+  }
+
+  .text-button {
+    font-size: 11px;
+  }
+
+  .field input,
+  .field select {
+    height: 46px;
+  }
+
+  .toggle-control {
+    padding: 12px 10px;
+  }
+
+  .drop-zone {
+    min-height: 155px;
+    padding: 21px 12px;
+  }
+
+  .drop-zone strong {
+    font-size: 14px;
+  }
+
+  .download-actions {
+    gap: 6px;
+  }
+
+  .primary-button,
+  .secondary-button {
+    padding: 0 11px;
+    font-size: 12px;
+  }
+
+  .app-footer {
+    padding-inline: 12px;
+  }
+}
