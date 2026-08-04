@@ -1491,12 +1491,32 @@ body {
   max-width: 100%;
 }
 
-/* iOS Safari의 date 입력창 고유 최소 너비 때문에 카드 밖으로 넘치는 현상 방지 */
+/* iOS Safari의 date 입력창 고유 최소 너비 및 세로 정렬 보정 */
 .field input[type="date"] {
   display: block;
   min-width: 0;
   -webkit-appearance: none;
   appearance: none;
+  padding-top: 3px;
+  padding-bottom: 0;
+  line-height: 1.2;
+}
+
+/* iPhone/iPad Safari에서 날짜 글자가 위로 붙는 내부 영역 보정 */
+.field input[type="date"]::-webkit-date-and-time-value {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  text-align: center;
+}
+
+.field input[type="date"]::-webkit-datetime-edit {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0;
 }
 
 @media (max-width: 680px) {
