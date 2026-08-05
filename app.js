@@ -32,6 +32,7 @@ const elements = {
   dropZone: document.getElementById("dropZone"),
   fileInput: document.getElementById("fileInput"),
   addMoreBtn: document.getElementById("addMoreBtn"),
+  pasteBtn: document.getElementById("pasteBtn"),
   stretchAllBtn: document.getElementById("stretchAllBtn"),
   imageCount: document.getElementById("imageCount"),
   imageList: document.getElementById("imageList"),
@@ -82,6 +83,7 @@ function bindEvents() {
   });
 
   elements.addMoreBtn.addEventListener("click", () => elements.fileInput.click());
+  elements.pasteBtn.addEventListener("click", pasteFromClipboard);
   elements.stretchAllBtn.addEventListener("click", stretchAllImages);
   elements.fileInput.addEventListener("change", async (event) => {
     await addFiles(event.target.files);
@@ -139,6 +141,8 @@ function bindEvents() {
     elements.youthPhoto.naturalWidth ? showYouthPhoto() : showYouthPhotoPlaceholder();
   }
 
+  document.addEventListener("paste", handleDocumentPaste);
+
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       if (!elements.cropModal.hidden) closeCropModal();
@@ -157,7 +161,73 @@ function bindEvents() {
 }
 
 
-async function addFiles(fileList) {
+function makeClipboardFile(blob, index = 0) {
+  const extensionByType = {
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/webp": "webp",
+    "image/gif": "gif",
+  };
+  const extension = extensionByType[blob.type] || "png";
+  const timestamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
+  const suffix = index > 0 ? `_${index + 1}` : "";
+  return new File([blob], `붙여넣은_악보_${timestamp}${suffix}.${extension}`, { type: blob.type || "image/png" });
+}
+
+function getImageFilesFromClipboardData(clipboardData) {
+  if (!clipboardData) return [];
+
+  const files = Array.from(clipboardData.files || []).filter((file) => file.type.startsWith("image/"));
+  if (files.length) return files;
+
+  return Array.from(clipboardData.items || [])
+    .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+    .map((item, index) => {
+      const blob = item.getAsFile();
+      return blob ? makeClipboardFile(blob, index) : null;
+    })
+    .filter(Boolean);
+}
+
+async function handleDocumentPaste(event) {
+  const imageFiles = getImageFilesFromClipboardData(event.clipboardData);
+  if (!imageFiles.length) return;
+
+  event.preventDefault();
+  await addFiles(imageFiles, { source: "clipboard" });
+}
+
+async function pasteFromClipboard() {
+  if (!navigator.clipboard || typeof navigator.clipboard.read !== "function") {
+    showToast("이 브라우저에서는 버튼 붙여넣기가 제한됩니다. 복사 후 Ctrl+V를 눌러 주세요.");
+    return;
+  }
+
+  try {
+    const clipboardItems = await navigator.clipboard.read();
+    const imageFiles = [];
+
+    for (const clipboardItem of clipboardItems) {
+      const imageType = clipboardItem.types.find((type) => type.startsWith("image/"));
+      if (!imageType) continue;
+      const blob = await clipboardItem.getType(imageType);
+      imageFiles.push(makeClipboardFile(blob, imageFiles.length));
+    }
+
+    if (!imageFiles.length) {
+      showToast("클립보드에 복사된 이미지가 없습니다.");
+      return;
+    }
+
+    await addFiles(imageFiles, { source: "clipboard" });
+  } catch (error) {
+    console.error(error);
+    showToast("클립보드 접근이 차단되었습니다. 복사 후 Ctrl+V를 눌러 주세요.");
+  }
+}
+
+
+async function addFiles(fileList, options = {}) {
   const imageFiles = Array.from(fileList || []).filter((file) => file.type.startsWith("image/"));
 
   if (!imageFiles.length) {
@@ -193,7 +263,10 @@ async function addFiles(fileList) {
   renderImageList();
   await requestRender();
 
-  if (loadedItems.length) showToast(`${loadedItems.length}개의 악보 이미지를 추가했습니다.`);
+  if (loadedItems.length) {
+    const action = options.source === "clipboard" ? "붙여넣었습니다" : "추가했습니다";
+    showToast(`${loadedItems.length}개의 악보 이미지를 ${action}.`);
+  }
 }
 
 function readFileAsDataUrl(file) {

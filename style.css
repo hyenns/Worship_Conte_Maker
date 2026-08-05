@@ -1741,3 +1741,34 @@ body {
     padding-inline: 12px;
   }
 }
+
+
+/* v17: 클립보드 이미지 붙여넣기 */
+.drop-zone kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 22px;
+  margin: 0 2px;
+  padding: 0 6px;
+  border: 1px solid #d0cec4;
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  color: var(--ink);
+  background: #fff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+}
+
+@media (max-width: 680px) {
+  .drop-zone kbd {
+    min-width: 22px;
+    min-height: 20px;
+    padding: 0 5px;
+    font-size: 10px;
+  }
+}

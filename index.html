@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="description" content="악보 이미지를 자동으로 정리해 찬양 콘티 이미지를 만드는 웹 도구" />
   <title>Worship Setlist Maker</title>
-  <link rel="stylesheet" href="style.css?v=16" />
+  <link rel="stylesheet" href="style.css?v=17" />
 </head>
 <body>
   <header class="app-header">
@@ -91,13 +91,14 @@
         <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" multiple hidden />
         <div class="upload-icon" aria-hidden="true">＋</div>
         <strong>악보 이미지를 여기에 끌어다 놓으세요</strong>
-        <span>또는 클릭해서 여러 장을 한 번에 선택하세요</span>
-        <small>PNG · JPG · WEBP / 업로드한 순서대로 자동 배치</small>
+        <span>클릭해 선택하거나, 복사한 이미지를 <kbd>Ctrl</kbd>+<kbd>V</kbd>로 붙여넣으세요</span>
+        <small>PNG · JPG · WEBP / 드래그·파일 선택·클립보드 붙여넣기 지원</small>
       </div>
 
       <div class="toolbar">
         <div class="toolbar-actions">
           <button type="button" class="secondary-button" id="addMoreBtn">이미지 더 추가</button>
+          <button type="button" class="secondary-button" id="pasteBtn">클립보드 붙여넣기</button>
           <button type="button" class="secondary-button bulk-fit-button" id="stretchAllBtn" disabled>모든 악보 세로로 채우기</button>
         </div>
         <p>카드를 끌어서 순서를 변경하고,<br class="wide-only-break" />곡별로 여백을 자를 수 있습니다.</p>
@@ -217,6 +218,6 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="app.js?v=16"></script>
+  <script src="app.js?v=17"></script>
 </body>
 </html>
