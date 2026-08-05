@@ -213,14 +213,14 @@ async function pasteFromClipboard() {
     }
 
     if (!imageFiles.length) {
-      showToast("클립보드에 복사된 이미지가 없습니다.");
+      showToast("복사한 악보 이미지가 없습니다.");
       return;
     }
 
     await addFiles(imageFiles, { source: "clipboard" });
   } catch (error) {
     console.error(error);
-    showToast("클립보드 접근이 차단되었습니다. 복사 후 Ctrl+V를 눌러 주세요.");
+    showToast("복사한 악보를 불러올 수 없습니다. 복사 후 Ctrl+V를 눌러 주세요.");
   }
 }
 
