@@ -393,13 +393,14 @@ function renderEmptyPreview() {
   const columns = Number(elements.columnsSelect.value);
   const [pageWidth, pageHeight] = elements.pageSizeSelect.value.split("x").map(Number);
   const pagePreset = getSelectedPagePreset();
+  const previewScale = getPreviewPaperScale();
   const columnMarkers = Array.from({ length: columns }, (_, index) => `<span>${index + 1}</span>`).join("");
 
   state.canvases = [];
   elements.previewPages.className = "preview-pages empty-preview";
   elements.previewPages.innerHTML = `
     <div class="preview-placeholder">
-      <div class="placeholder-page" style="--placeholder-columns: ${columns}; aspect-ratio: ${pageWidth} / ${pageHeight};">
+      <div class="placeholder-page" style="--placeholder-columns: ${columns}; --preview-paper-scale: ${previewScale}; aspect-ratio: ${pageWidth} / ${pageHeight};">
         ${columnMarkers}
       </div>
       <strong>완성된 콘티가 여기에 표시됩니다.</strong>
@@ -439,6 +440,7 @@ async function requestRender() {
 function renderPreviewPages() {
   const columns = Number(elements.columnsSelect.value);
   const [pageWidth, pageHeight] = elements.pageSizeSelect.value.split("x").map(Number);
+  const previewScale = getPreviewPaperScale();
   const pages = chunkArray(state.items, columns);
 
   state.canvases = [];
@@ -448,6 +450,7 @@ function renderPreviewPages() {
   pages.forEach((pageItems, pageIndex) => {
     const wrapper = document.createElement("article");
     wrapper.className = "page-preview";
+    wrapper.style.setProperty("--preview-paper-scale", previewScale);
 
     const header = document.createElement("div");
     header.className = "page-preview-header";
@@ -1089,6 +1092,20 @@ function launchEasterConfetti() {
     piece.style.setProperty("--spin", `${360 + Math.random() * 720}deg`);
     elements.confettiLayer.appendChild(piece);
   }
+}
+
+function getPreviewPaperScale() {
+  const selectedValue = elements.pageSizeSelect.value;
+
+  // 화면용 16:9 규격은 미리보기 영역을 가득 사용합니다.
+  if (selectedValue === "1920x1080" || selectedValue === "2560x1440") {
+    return 1;
+  }
+
+  // 종이 규격은 실제 가로 길이 비율(A3 420mm 기준)을 미리보기 크기에 반영합니다.
+  const selectedPreset = getSelectedPagePreset();
+  const a3WidthMm = PAGE_PRESETS["4200x2970"].printWidthMm;
+  return Math.min(1, selectedPreset.printWidthMm / a3WidthMm);
 }
 
 function getSelectedPagePreset() {
