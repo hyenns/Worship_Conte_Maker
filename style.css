@@ -1814,3 +1814,15 @@ body {
 .zoom-control-row input[type="range"] {
   touch-action: pan-y;
 }
+
+
+/* v19: 중복 이미지 추가 버튼 제거 및 안내 문구 한 줄 정리 */
+.toolbar-help {
+  white-space: nowrap;
+}
+
+@media (max-width: 680px) {
+  .toolbar-help {
+    white-space: normal;
+  }
+}

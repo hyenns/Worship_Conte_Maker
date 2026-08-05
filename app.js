@@ -31,7 +31,6 @@ const elements = {
   resetBtn: document.getElementById("resetBtn"),
   dropZone: document.getElementById("dropZone"),
   fileInput: document.getElementById("fileInput"),
-  addMoreBtn: document.getElementById("addMoreBtn"),
   pasteBtn: document.getElementById("pasteBtn"),
   stretchAllBtn: document.getElementById("stretchAllBtn"),
   imageCount: document.getElementById("imageCount"),
@@ -82,7 +81,6 @@ function bindEvents() {
     }
   });
 
-  elements.addMoreBtn.addEventListener("click", () => elements.fileInput.click());
   elements.pasteBtn.addEventListener("click", pasteFromClipboard);
   elements.stretchAllBtn.addEventListener("click", stretchAllImages);
   elements.fileInput.addEventListener("change", async (event) => {
