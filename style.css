@@ -594,8 +594,8 @@ h1 {
   display: grid;
   grid-template-columns: repeat(var(--placeholder-columns, 3), 1fr);
   width: min(
-    calc(620px * var(--preview-paper-scale, 1)),
-    calc(100% * var(--preview-paper-scale, 1))
+    calc(660px * var(--preview-paper-scale, 1)),
+    100%
   );
   aspect-ratio: 16 / 9;
   margin: 0 auto 18px;
@@ -627,8 +627,8 @@ h1 {
 .page-preview {
   display: grid;
   width: min(
-    calc(620px * var(--preview-paper-scale, 1)),
-    calc(100% * var(--preview-paper-scale, 1))
+    calc(660px * var(--preview-paper-scale, 1)),
+    100%
   );
   gap: 8px;
   margin-inline: auto;

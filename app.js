@@ -1097,15 +1097,17 @@ function launchEasterConfetti() {
 function getPreviewPaperScale() {
   const selectedValue = elements.pageSizeSelect.value;
 
-  // 화면용 16:9 규격은 미리보기 영역을 가득 사용합니다.
+  // 화면용 16:9 규격은 미리보기 영역을 넓게 사용합니다.
   if (selectedValue === "1920x1080" || selectedValue === "2560x1440") {
     return 1;
   }
 
-  // 종이 규격은 실제 가로 길이 비율(A3 420mm 기준)을 미리보기 크기에 반영합니다.
+  // 실제 용지 크기 차이는 유지하되, A4·B4가 지나치게 작아 보이지 않도록
+  // 가로 길이 비율을 완만하게 압축해 화면용 배율로 변환합니다.
   const selectedPreset = getSelectedPagePreset();
   const a3WidthMm = PAGE_PRESETS["4200x2970"].printWidthMm;
-  return Math.min(1, selectedPreset.printWidthMm / a3WidthMm);
+  const physicalRatio = selectedPreset.printWidthMm / a3WidthMm;
+  return Math.min(1, 0.6 + physicalRatio * 0.4);
 }
 
 function getSelectedPagePreset() {
