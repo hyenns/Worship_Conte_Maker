@@ -435,10 +435,6 @@ h1 {
   transition: opacity 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
 }
 
-.image-card[draggable="true"] {
-  cursor: grab;
-}
-
 .image-card.dragging {
   opacity: 0.35;
   transform: scale(0.99);
@@ -450,9 +446,26 @@ h1 {
 }
 
 .drag-handle {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  min-height: 42px;
   color: #aaa89f;
   font-size: 18px;
   text-align: center;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-handle:focus-visible {
+  border-radius: 6px;
+  outline: 2px solid rgba(110, 119, 84, 0.35);
+  outline-offset: 2px;
 }
 
 .card-thumb {
@@ -1771,4 +1784,33 @@ body {
     padding: 0 5px;
     font-size: 10px;
   }
+}
+
+
+/* v18: 안내 문구 줄바꿈과 카드 순서 변경 조작 개선 */
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+}
+
+.toolbar-help {
+  width: 100%;
+  line-height: 1.55;
+  text-align: left !important;
+  word-break: keep-all;
+}
+
+.toolbar-help span {
+  display: block;
+}
+
+.image-card:not(.dragging) {
+  cursor: default;
+}
+
+.zoom-control-row,
+.zoom-control-row input[type="range"] {
+  touch-action: pan-y;
 }

@@ -307,10 +307,9 @@ function renderImageList() {
   state.items.forEach((item, index) => {
     const card = document.createElement("article");
     card.className = "image-card";
-    card.draggable = true;
     card.dataset.index = String(index);
     card.innerHTML = `
-      <div class="drag-handle" title="순서 변경">⋮⋮</div>
+      <div class="drag-handle" draggable="true" role="button" tabindex="0" title="이 점을 끌어 순서 변경" aria-label="${escapeHtml(item.name)} 순서 변경">⋮⋮</div>
       <div class="card-thumb"><img src="${item.dataUrl}" alt="${escapeHtml(item.name)} 미리보기" /></div>
       <div class="card-info">
         <div class="card-title-row">
@@ -356,6 +355,7 @@ function renderImageList() {
 }
 
 function bindCardEvents(card, index) {
+  const dragHandle = card.querySelector(".drag-handle");
   const zoomInput = card.querySelector('[data-action="zoom"]');
   const zoomValue = card.querySelector(".zoom-value");
   const zoomOutButton = card.querySelector('[data-action="zoomOut"]');
@@ -410,18 +410,17 @@ function bindCardEvents(card, index) {
     requestRender();
   });
 
-  card.addEventListener("dragstart", (event) => {
-    if (event.target.closest("button, input, select, label")) {
-      event.preventDefault();
-      return;
-    }
+  // 순서 변경은 왼쪽 손잡이에서만 시작합니다.
+  // 카드 전체를 draggable로 두면 확대·축소 슬라이더 조작이 드래그로 오인될 수 있습니다.
+  dragHandle.addEventListener("dragstart", (event) => {
     state.dragIndex = index;
     card.classList.add("dragging");
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/plain", String(index));
+    event.dataTransfer.setDragImage(card, 18, 18);
   });
 
-  card.addEventListener("dragend", () => {
+  dragHandle.addEventListener("dragend", () => {
     state.dragIndex = null;
     document.querySelectorAll(".image-card").forEach((element) => {
       element.classList.remove("dragging", "drag-target");
@@ -429,8 +428,9 @@ function bindCardEvents(card, index) {
   });
 
   card.addEventListener("dragover", (event) => {
+    if (state.dragIndex === null) return;
     event.preventDefault();
-    if (state.dragIndex !== null && state.dragIndex !== index) card.classList.add("drag-target");
+    if (state.dragIndex !== index) card.classList.add("drag-target");
   });
 
   card.addEventListener("dragleave", () => card.classList.remove("drag-target"));
